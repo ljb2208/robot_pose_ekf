@@ -377,7 +377,7 @@ namespace estimation
   };
 
   // get most recent filter posterior as PoseWithCovarianceStamped
-  void OdomEstimation::getEstimate(geometry_msgs::PoseWithCovarianceStamped& estimate)
+  void OdomEstimation::getEstimate(nav_msgs::Odometry& estimate)
   {
     // pose
     StampedTransform tmp;

@@ -60,6 +60,7 @@ namespace estimation
       imu_initializing_(false),
       vo_initializing_(false),
       gps_initializing_(false),
+      publish_tf_(false),
       odom_covariance_(6),
       imu_covariance_(3),
       vo_covariance_(6),
@@ -83,6 +84,7 @@ namespace estimation
     nh_private.param("gps_used",   gps_used_, false);
     nh_private.param("debug",   debug_, false);
     nh_private.param("self_diagnose",  self_diagnose_, false);
+    nh_private.param("publish_tf",  publish_tf_, false);
     double freq;
     nh_private.param("freq", freq, 30.0);
 
@@ -101,7 +103,7 @@ namespace estimation
     timer_ = nh_private.createTimer(ros::Duration(1.0/max(freq,1.0)), &OdomEstimationNode::spin, this);
 
     // advertise our estimation
-    pose_pub_ = nh_private.advertise<geometry_msgs::PoseWithCovarianceStamped>("odom_combined", 10);
+    pose_pub_ = nh_private.advertise<nav_msgs::Odometry>("odom_combined", 10);
 
     // initialize
     filter_stamp_ = Time::now();
@@ -192,14 +194,14 @@ namespace estimation
     // activate odom
     if (!odom_active_) {
       if (!odom_initializing_){
-	odom_initializing_ = true;
-	odom_init_stamp_ = odom_stamp_;
-	ROS_INFO("Initializing Odom sensor");      
+        odom_initializing_ = true;
+        odom_init_stamp_ = odom_stamp_;
+        ROS_INFO("Initializing Odom sensor");      
       }
       if ( filter_stamp_ >= odom_init_stamp_){
-	odom_active_ = true;
-	odom_initializing_ = false;
-	ROS_INFO("Odom sensor activated");      
+        odom_active_ = true;
+        odom_initializing_ = false;
+        ROS_INFO("Odom sensor activated");      
       }
       else ROS_DEBUG("Waiting to activate Odom, because Odom measurements are still %f sec in the future.", 
 		    (odom_init_stamp_ - filter_stamp_).toSec());
@@ -263,14 +265,14 @@ namespace estimation
     // activate imu
     if (!imu_active_) {
       if (!imu_initializing_){
-	imu_initializing_ = true;
-	imu_init_stamp_ = imu_stamp_;
-	ROS_INFO("Initializing Imu sensor");      
+        imu_initializing_ = true;
+        imu_init_stamp_ = imu_stamp_;
+        ROS_INFO("Initializing Imu sensor");      
       }
       if ( filter_stamp_ >= imu_init_stamp_){
-	imu_active_ = true;
-	imu_initializing_ = false;
-	ROS_INFO("Imu sensor activated");      
+        imu_active_ = true;
+        imu_initializing_ = false;
+        ROS_INFO("Imu sensor activated");      
       }
       else ROS_DEBUG("Waiting to activate IMU, because IMU measurements are still %f sec in the future.", 
 		    (imu_init_stamp_ - filter_stamp_).toSec());
@@ -435,11 +437,14 @@ namespace estimation
           ekf_sent_counter_++;
           
           // broadcast most recent estimate to TransformArray
-          StampedTransform tmp;
-          my_filter_.getEstimate(ros::Time(), tmp);
-          if(!vo_active_ && !gps_active_)
-            tmp.getOrigin().setZ(0.0);
-          odom_broadcaster_.sendTransform(StampedTransform(tmp, tmp.stamp_, output_frame_, base_footprint_frame_));
+          if (publish_tf_)
+          {
+            StampedTransform tmp;
+            my_filter_.getEstimate(ros::Time(), tmp);
+            if(!vo_active_ && !gps_active_)
+              tmp.getOrigin().setZ(0.0);
+            odom_broadcaster_.sendTransform(StampedTransform(tmp, tmp.stamp_, output_frame_, base_footprint_frame_));
+          }
           
           if (debug_){
             // write to file
@@ -459,14 +464,14 @@ namespace estimation
 
       // initialize filer with odometry frame
       if (imu_active_ && gps_active_ && !my_filter_.isInitialized()) {
-	Quaternion q = imu_meas_.getRotation();
+	      Quaternion q = imu_meas_.getRotation();
         Vector3 p = gps_meas_.getOrigin();
         Transform init_meas_ = Transform(q, p);
         my_filter_.initialize(init_meas_, gps_stamp_);
         ROS_INFO("Kalman filter initialized with gps and imu measurement");
       }	
       else if ( odom_active_ && gps_active_ && !my_filter_.isInitialized()) {
-	Quaternion q = odom_meas_.getRotation();
+	      Quaternion q = odom_meas_.getRotation();
         Vector3 p = gps_meas_.getOrigin();
         Transform init_meas_ = Transform(q, p);
         my_filter_.initialize(init_meas_, gps_stamp_);
