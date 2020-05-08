@@ -524,7 +524,13 @@ bool OdomEstimationNode::getStatus(robot_pose_ekf::GetStatus::Request& req, robo
   ss << " * Robot pose ekf filter" << endl;
   ss << "   - is "; if (!my_filter_.isInitialized()) ss << "NOT "; ss << "active" << endl;
   ss << "   - sent " << ekf_sent_counter_ << " messages" << endl;
-  ss << "   - pulishes on topics " << pose_pub_.getTopic() << " and /tf" << endl;
+  ss << "   - publishes on topics " << pose_pub_.getTopic() << " and /tf" << endl;
+  
+  if (publish_tf_)
+    ss << "   - publishing transforms" << endl;
+  else
+    ss << "   - not publishing transforms" << endl;
+  
   resp.status = ss.str();
   return true;
 }
