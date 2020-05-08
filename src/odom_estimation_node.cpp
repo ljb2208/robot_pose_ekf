@@ -60,7 +60,7 @@ namespace estimation
       imu_initializing_(false),
       vo_initializing_(false),
       gps_initializing_(false),
-      publish_tf_(false),
+      publish_tf_(true),
       odom_covariance_(6),
       imu_covariance_(3),
       vo_covariance_(6),
