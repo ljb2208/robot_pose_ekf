@@ -76,7 +76,7 @@ namespace estimation
 
     // paramters
     nh_private.param("output_frame", output_frame_, std::string("odom_combined"));
-    nh_private.param("base_footprint_frame", base_footprint_frame_, std::string("base_footprint"));
+    nh_private.param("base_footprint_frame", base_footprint_frame_, std::string("base_link"));
     nh_private.param("sensor_timeout", timeout_, 1.0);
     nh_private.param("odom_used", odom_used_, true);
     nh_private.param("imu_used",  imu_used_, true);
@@ -84,7 +84,7 @@ namespace estimation
     nh_private.param("gps_used",   gps_used_, false);
     nh_private.param("debug",   debug_, false);
     nh_private.param("self_diagnose",  self_diagnose_, false);
-    nh_private.param("publish_tf",  publish_tf_, false);
+    nh_private.param("publish_tf",  publish_tf_, true);
     double freq;
     nh_private.param("freq", freq, 30.0);
 
